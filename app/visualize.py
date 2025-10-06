@@ -539,7 +539,7 @@ init();
 </html>
 """
 
-with open("knowledge_graph.html","w",encoding="utf-8") as f:
+with open("../scripts/knowledge_graph.html", "w", encoding="utf-8") as f:
     f.write(html)
 
 print("✅ 已生成 knowledge_graph.html（默认亮色，已移除主题切换）")

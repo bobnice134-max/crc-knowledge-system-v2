@@ -31,7 +31,7 @@ def _st_rerun():
 
 # ---------------- 基础路径 ----------------
 DATA_XLSX = os.path.join("data", "cases.xlsx")
-GRAPH_HTML = os.path.join("app", "knowledge_graph.html")
+GRAPH_HTML = "app/knowledge_graph.html"
 RESULTS_CSV = os.path.join("app", "results.csv")
 RESULTS_DIR = os.path.join("app", "results_runs")
 
