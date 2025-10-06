@@ -30,10 +30,10 @@ def _st_rerun():
         pass
 
 # ---------------- 基础路径 ----------------
-DATA_XLSX = r"C:\Users\刘航博\Desktop\临床试验协调过程案例库（知识图谱版）.xlsx"
-GRAPH_HTML = r"D:\python\PythonProject2\scripts\knowledge_graph.html"
-RESULTS_CSV = "results.csv"                 # 历史成绩 CSV（列：time,score,total,mode,run_id）
-RESULTS_DIR = "results_runs"                # 每次考试明细：run_<run_id>.json
+DATA_XLSX = os.path.join("data", "cases.xlsx")
+GRAPH_HTML = os.path.join("app", "knowledge_graph.html")
+RESULTS_CSV = os.path.join("app", "results.csv")
+RESULTS_DIR = os.path.join("app", "results_runs")
 
 # ---------------- 页面基本设置 ----------------
 st.set_page_config(page_title="CRC 知识图谱测评平台", layout="wide")
