@@ -433,9 +433,13 @@ if menu == "📚 案例题库":
 # ---------------- 页面：知识图谱 ----------------
 elif menu == "🌐 知识图谱":
     st.markdown("<div class='section-title'>🌐 知识图谱</div>", unsafe_allow_html=True)
+    import os
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    GRAPH_HTML = os.path.join(BASE_DIR, "knowledge_graph.html")
     if os.path.exists(GRAPH_HTML):
         with open(GRAPH_HTML, "r", encoding="utf-8") as f:
-            components.html(f.read(), height=700, scrolling=True)
+            html_content = f.read()
+        components.html(html_content, height=800, scrolling=True)
     else:
         st.warning("尚未找到 knowledge_graph.html，请先在脚本里生成。")
 
