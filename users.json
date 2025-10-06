@@ -1,0 +1,12 @@
+{
+  "admin": {
+    "password": "123456",
+    "name": "leo",
+    "role": "管理员"
+  },
+  "guest": {
+    "password": "guest123",
+    "name": "访客用户",
+    "role": "普通用户"
+  }
+}
