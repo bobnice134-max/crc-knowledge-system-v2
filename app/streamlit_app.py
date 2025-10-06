@@ -30,10 +30,11 @@ def _st_rerun():
         pass
 
 # ---------------- 基础路径 ----------------
-DATA_XLSX = os.path.join("data", "cases.xlsx")
-GRAPH_HTML = "app/knowledge_graph.html"
-RESULTS_CSV = os.path.join("app", "results.csv")
-RESULTS_DIR = os.path.join("app", "results_runs")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # 自动定位当前文件所在路径
+DATA_XLSX = os.path.join(BASE_DIR, "..", "data", "cases.xlsx")  # 向上一级找到 data 文件夹
+GRAPH_HTML = os.path.join(BASE_DIR, "knowledge_graph.html")     # 当前目录下的 HTML 文件
+RESULTS_CSV = os.path.join(BASE_DIR, "results.csv")             # 当前目录下的结果文件
+RESULTS_DIR = os.path.join(BASE_DIR, "results_runs")            # 当前目录下的结果文件夹
 
 # ---------------- 页面基本设置 ----------------
 st.set_page_config(page_title="CRC 知识图谱测评平台", layout="wide")
