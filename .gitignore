@@ -1,0 +1,11 @@
+# 不要把机密和本地产物提交到仓库
+.streamlit/secrets.toml
+
+# 本地运行环境/缓存
+.venv/
+__pycache__/
+
+# 本地结果文件
+results.csv
+results_runs/
+deploy_log.txt
