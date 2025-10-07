@@ -20,8 +20,9 @@ def read_echarts_inline():
             with io.open(p, "r", encoding="utf-8") as f:
                 return f.read()
         except:
-            pass
-    return ""
+            continue
+    # 兜底方案（Streamlit Cloud 找不到本地 JS 时用 CDN）
+    return "<script src='https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js'></script>"
 EJS = read_echarts_inline()
 
 # ===== 拉 Neo4j 数据（带 DISTINCT 去重） =====
@@ -539,7 +540,8 @@ init();
 </html>
 """
 
-with open("../scripts/knowledge_graph.html", "w", encoding="utf-8") as f:
+with open("knowledge_graph.html", "w", encoding="utf-8") as f:
     f.write(html)
 
-print("✅ 已生成 knowledge_graph.html（默认亮色，已移除主题切换）")
+print("✅ 已生成 app/knowledge_graph.html（内嵌JS版，Streamlit Cloud 可直接显示）")
+
