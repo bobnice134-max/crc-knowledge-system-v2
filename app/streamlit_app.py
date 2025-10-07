@@ -39,6 +39,18 @@ RESULTS_DIR = os.path.join(BASE_DIR, "results_runs")            # 当前目录�
 # ---------------- 页面基本设置 ----------------
 st.set_page_config(page_title="CRC 知识图谱测评平台", layout="wide")
 
+st.markdown("""
+<style>
+/* 隐藏整条顶栏：包含 Deploy、汉堡菜单、状态等 */
+header {visibility: hidden;}
+/* 保险起见，工具条再隐藏一次 */
+[data-testid="stToolbar"] {visibility: hidden; height: 0;}
+</style>
+""", unsafe_allow_html=True)
+
+from auth_code import require_login, login_status_bar
+require_login()
+
 # ---------------- 主题与全局样式（固定亮色 + 紧凑讲评卡） ----------------
 def inject_theme_css():
     bg, panel, border, text, accent, table_bg, hint = \
@@ -392,6 +404,7 @@ def rebuild_results_from_runs():
                     pass
     return pd.DataFrame(rows, columns=["time","score","total","mode","run_id"])
 
+login_status_bar()
 # ---------------- 侧边栏 ----------------
 with st.sidebar:
     st.markdown("### 导航")
