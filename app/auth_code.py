@@ -54,13 +54,13 @@ def require_login(users_json_path: str = "users.json"):
     with c1:
         user_id = st.text_input("账号", key="code_user_id")
     with c2:
-        code = st.text_input("登录码", type="password", key="code_plain")
+        code = st.text_input("密码", type="password", key="code_plain")
 
     if st.button("登录", type="primary", use_container_width=True):
         uid = (user_id or "").strip()
         cp  = (code or "").strip()
         if not uid or not cp:
-            st.error("请输入账号和登录码。")
+            st.error("请输入账号和密码。")
             st.stop()
 
         u = users.get(uid)
@@ -69,7 +69,7 @@ def require_login(users_json_path: str = "users.json"):
             st.stop()
 
         if not _verify_code(cp, u.get("code_hash", "")):
-            st.error("登录码不正确。")
+            st.error("密码不正确。")
             st.stop()
 
         st.session_state[SESSION_USER] = {
