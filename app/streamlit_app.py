@@ -30,7 +30,7 @@ st.set_page_config(
     menu_items={"Get help": None, "Report a Bug": None, "About": None},
 )
 
-st.markdown("""
+st.markdown('''
 <style>
 /* 固定显示侧栏，不可折叠 */
 [data-testid="stSidebar"] {
@@ -44,7 +44,7 @@ st.markdown("""
     z-index: 100 !important;
 }
 
-/* ---- 隐藏左上角折叠按钮（新版 Streamlit 全兼容） ---- */
+/* 隐藏左上角折叠按钮（全兼容写法） */
 button[title*="收起"], button[title*="折叠"],
 button[aria-label*="收起"], button[aria-label*="折叠"],
 button[title*="collapse"], button[aria-label*="collapse"],
@@ -58,7 +58,7 @@ div[data-testid="stSidebarHeader"] button {
     opacity: 0 !important;
 }
 
-/* 页面顶部与表格微调 */
+/* 页面顶部与表格样式微调 */
 header { visibility: hidden; }
 section[data-testid="stSidebarContent"] { padding-top: 0.5rem; }
 .stDataFrame td div {
@@ -67,7 +67,7 @@ section[data-testid="stSidebarContent"] { padding-top: 0.5rem; }
     line-height:1.5;
 }
 </style>
-""", unsafe_allow_html=True)
+''', unsafe_allow_html=True)
 
 # ---- Streamlit 兼容 rerun（新旧版本都能用）----
 def _st_rerun():
