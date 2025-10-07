@@ -1,11 +1,21 @@
-# 不要把机密和本地产物提交到仓库
+# 用户数据（每人独立目录）
+app/user_data/
+
+# 旧版或兜底产物（以防误生成）
+app/results.csv
+app/results_runs/
+
+# 私密配置
 .streamlit/secrets.toml
+users.json
 
-# 本地运行环境/缓存
-.venv/
+# 题库/内部资料（如需保密）
+data/*.xlsx
+
+# Python 常规
 __pycache__/
+*.pyc
+.venv/
 
-# 本地结果文件
-results.csv
-results_runs/
-deploy_log.txt
+# 聊天/日志（如果你开启了）
+app/qa_log.jsonl

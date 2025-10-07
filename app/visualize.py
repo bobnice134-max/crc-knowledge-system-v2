@@ -1,31 +1,28 @@
 # -*- coding: utf-8 -*-
-# ECharts · 知识图谱可视化（针对你提出的3点修复版｜防抖动）
-# ① 线条样式更顺滑（直线、柔和颜色）
-# ② 力导向参数防“粘团”（repulsion↑，edgeLength区间）
-# ③ 指标视图点击指标 → 反查“案例→对应→该指标”的所有案例，并合并这些案例的整条问题链
-# ④ 主题切换移除，默认亮色
+# ECharts · 知识图谱可视化（修复版：禁缩放 / 固定高度 / 柔和边线 / 指标→合并案例问题链）
 
 from py2neo import Graph
 import os, json, math, traceback, io, re
 
-# ===== 连接参数 =====
+# ===== 连接参数（支持环境变量）=====
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASS = os.getenv("NEO4J_PASS", "dsm123456")
 NEO4J_DB   = os.getenv("NEO4J_DB", "neo4j")
 
 def read_echarts_inline():
+    """优先内联本地 echarts.min.js；找不到就用 CDN。"""
     for p in ["echarts.min.js", os.path.join(os.path.dirname(__file__), "echarts.min.js")]:
         try:
             with io.open(p, "r", encoding="utf-8") as f:
                 return f.read()
         except:
             continue
-    # 兜底方案（Streamlit Cloud 找不到本地 JS 时用 CDN）
     return "<script src='https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js'></script>"
+
 EJS = read_echarts_inline()
 
-# ===== 拉 Neo4j 数据（带 DISTINCT 去重） =====
+# ===== 拉 Neo4j 数据（带 DISTINCT 去重）=====
 diag_error, node_total, rel_total = "", 0, 0
 rows = []
 try:
@@ -56,7 +53,7 @@ def group_of(n):
         if lab in wanted: return lab
     return "Other"
 
-# ===== 构建（含“属于”连通过滤） =====
+# ===== 构建图数据 =====
 NODES, LINKS, DEG = {}, [], {}
 CENTER_IDS = set()
 CODE_RE = re.compile(r"^\d+(?:\.\d+)*")
@@ -86,7 +83,7 @@ if rows:
             DEG[aid] = DEG.get(aid,0)+1
             DEG[bid] = DEG.get(bid,0)+1
 
-# 可选的“属于”连通：剔除不挂在中心下的脏指标
+# —— 可选“属于”连通：只保留挂在中心下的指标 —— #
 allowed_indicator_ids = set()
 if CENTER_IDS:
     belongs_adj = {}
@@ -128,19 +125,18 @@ ORDER = ["Center","Indicator","Case","Problem","Action","Result","Reflection","S
 CN    = {"Center":"指标中心","Indicator":"能力指标","Case":"案例","Problem":"问题","Action":"解决方法",
          "Result":"整改结果","Reflection":"反思","Stage":"试验阶段","Role":"岗位职责","Project":"试验项目","Other":"其他"}
 COLOR = {
-    "Center":    "#FFE082",  # 原 #FFC107 → 更浅的琥珀
-    "Indicator": "#A7C5EB",  # 原 #4E79A7 → 浅蓝
-    "Case":      "#F9C99B",  # 原 #F28E2B → 浅橙
-    "Problem":   "#F4A6A6",  # 原 #E15759 → 浅红
-    "Action":    "#A8DADC",  # 原 #76B7B2 → 浅青
-    "Result":    "#A9D6A4",  # 原 #59A14F → 浅绿
-    "Reflection":"#F6E08D",  # 原 #EDC948 → 浅黄
-    "Stage":     "#D5B3D8",  # 原 #B07AA1 → 浅紫
-    "Role":      "#FFC2CC",  # 原 #FF9DA7 → 浅粉
-    "Project":   "#C9B6A3",  # 原 #9C755F → 浅棕
-    "Other":     "#C0D1D1"   # 原 #93A1A1 → 浅灰蓝
+    "Center":    "#FFE082",
+    "Indicator": "#A7C5EB",
+    "Case":      "#F9C99B",
+    "Problem":   "#F4A6A6",
+    "Action":    "#A8DADC",
+    "Result":    "#A9D6A4",
+    "Reflection":"#F6E08D",
+    "Stage":     "#D5B3D8",
+    "Role":      "#FFC2CC",
+    "Project":   "#C9B6A3",
+    "Other":     "#C0D1D1"
 }
-
 
 present = set(nd["group"] for nd in NODES.values())
 ORDER_USED = [k for k in ORDER if k in present]
@@ -163,7 +159,7 @@ for nid, nd in NODES.items():
     })
 links_e = LINKS
 
-# ===== HTML =====
+# ===== 生成 HTML =====
 inline_echarts = f"<script>\n{EJS}\n</script>" if EJS else ""
 html = f"""<!doctype html>
 <html lang="zh">
@@ -173,7 +169,6 @@ html = f"""<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root {{
-    /* 直接使用亮色主题变量 */
     --bg:#F8FAFC; --panel:#FFFFFF; --border:#E5E7EB; --shadow:rgba(0,0,0,.08);
     --text:#111827; --accent:#355C8A;
   }}
@@ -185,9 +180,9 @@ html = f"""<!doctype html>
   .btn{{ padding:6px 10px; border-radius:10px; border:1px solid var(--border); background:var(--panel); cursor:pointer; color:var(--text); box-shadow:0 2px 8px var(--shadow); }}
   .btn:hover{{ border-color:var(--accent); }}
 
-  #kg{{ width:100%; height: calc(100vh - 56px); }}
+  /* 固定像素高度，避免底部留白（与 Streamlit 外层 height 搭配） */
+  #kg{{ width:100%; height: 680px; }}
 
-  /* 顶部横向图例（保持原样） */
   .legend-bar {{
     position:absolute; left:50%; transform:translateX(-50%);
     top:12px; z-index:2; background:var(--panel); border:1px solid var(--border);
@@ -197,7 +192,6 @@ html = f"""<!doctype html>
   .legend-item{{ display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:2px 8px; border:1px solid var(--border); border-radius:999px; background:rgba(0,0,0,0.02); }}
   .dot{{ width:10px;height:10px;border-radius:50%;display:inline-block; box-shadow:0 0 0 1px var(--border) inset; }}
 
-  /* 左下详情（保持不变） */
   #detail{{ position:absolute; left:10px; bottom:10px; width:440px; max-height:44vh; overflow:auto; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:10px; z-index:2; box-shadow:0 6px 24px var(--shadow); }}
   #detail h4{{ margin:0 0 8px 0; font-size:14px; display:flex; justify-content:space-between; align-items:center; }}
   #detail table{{ width:100%; font-size:13px; border-collapse:collapse; }}
@@ -221,7 +215,6 @@ html = f"""<!doctype html>
   <button class="btn" onclick="exportPNG()">导出PNG</button>
   <button class="btn" onclick="undoView()">⟲ 上一步</button>
   <button class="btn" onclick="redoView()">下一步 ⟳</button>
-  <!-- 移除主题切换按钮 -->
 </div>
 
 <div style="position:relative">
@@ -340,15 +333,15 @@ function updateCount(nodes, links){{
   document.getElementById('count').innerText = `节点 ${{nodes.length}} · 关系 ${{links.length}}`;
 }}
 
-/* ========= 线条样式：直线 + 柔和色 ========= */
+/* ========= 线条样式：直线 + 更柔和色 ========= */
 function edgeStyle(){{
   return {{
     width:0.9, opacity:0.7, curveness:0.0,
-    color:'#B8BFC7'
+    color:'#C9D1D9'
   }};
 }}
 
-/* ========= 渲染/主题 ========= */
+/* ========= 渲染 ========= */
 let chart, theme='light', mode='all';
 
 function currentTextColor(){{
@@ -362,7 +355,9 @@ function render(nodes, links, keepLayout=false){{
     data: nodes,
     links: links,
     categories: DATA.categories,
-    roam:true, draggable:true, animation:false,
+    roam:false,              // ✅ 禁用缩放/平移
+    draggable:true,
+    animation:false,
     lineStyle: edgeStyle(),
     edgeSymbol:['none','arrow'], edgeSymbolSize:6,
     emphasis: {{ focus:'adjacency' }},
@@ -397,7 +392,7 @@ function render(nodes, links, keepLayout=false){{
 }}
 
 function applyTheme(mode){{
-  // 固定为亮色，仅刷新颜色，不改布局
+  // 固定亮色，仅刷新颜色，不改布局
   chart.setOption({{
     backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg').trim(),
     tooltip: {{
@@ -415,7 +410,7 @@ function applyTheme(mode){{
 function init(){{
   chart = echarts.init(document.getElementById('kg'));
   render(DATA.nodes, DATA.links);
-  applyTheme(theme); // 固定亮色
+  applyTheme(theme);
   bindEvents();
 }}
 window.addEventListener('resize', () => chart && chart.resize());
@@ -543,5 +538,4 @@ init();
 with open("knowledge_graph.html", "w", encoding="utf-8") as f:
     f.write(html)
 
-print("✅ 已生成 app/knowledge_graph.html（内嵌JS版，Streamlit Cloud 可直接显示）")
-
+print("✅ 已生成 knowledge_graph.html（固定高度 680px，禁缩放，柔和连线色）。在 Streamlit 用 components.html(..., height=700, scrolling=False) 嵌入。")

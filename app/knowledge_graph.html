@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root {
-    /* 直接使用亮色主题变量 */
     --bg:#F8FAFC; --panel:#FFFFFF; --border:#E5E7EB; --shadow:rgba(0,0,0,.08);
     --text:#111827; --accent:#355C8A;
   }
@@ -18,9 +17,9 @@
   .btn{ padding:6px 10px; border-radius:10px; border:1px solid var(--border); background:var(--panel); cursor:pointer; color:var(--text); box-shadow:0 2px 8px var(--shadow); }
   .btn:hover{ border-color:var(--accent); }
 
-  #kg{ width:100%; height: calc(100vh - 56px); }
+  /* 固定像素高度，避免底部留白（与 Streamlit 外层 height 搭配） */
+  #kg{ width:100%; height: 680px; }
 
-  /* 顶部横向图例（保持原样） */
   .legend-bar {
     position:absolute; left:50%; transform:translateX(-50%);
     top:12px; z-index:2; background:var(--panel); border:1px solid var(--border);
@@ -30,7 +29,6 @@
   .legend-item{ display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:2px 8px; border:1px solid var(--border); border-radius:999px; background:rgba(0,0,0,0.02); }
   .dot{ width:10px;height:10px;border-radius:50%;display:inline-block; box-shadow:0 0 0 1px var(--border) inset; }
 
-  /* 左下详情（保持不变） */
   #detail{ position:absolute; left:10px; bottom:10px; width:440px; max-height:44vh; overflow:auto; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:10px; z-index:2; box-shadow:0 6px 24px var(--shadow); }
   #detail h4{ margin:0 0 8px 0; font-size:14px; display:flex; justify-content:space-between; align-items:center; }
   #detail table{ width:100%; font-size:13px; border-collapse:collapse; }
@@ -54,7 +52,6 @@
   <button class="btn" onclick="exportPNG()">导出PNG</button>
   <button class="btn" onclick="undoView()">⟲ 上一步</button>
   <button class="btn" onclick="redoView()">下一步 ⟳</button>
-  <!-- 移除主题切换按钮 -->
 </div>
 
 <div style="position:relative">
@@ -220,15 +217,15 @@ function updateCount(nodes, links){
   document.getElementById('count').innerText = `节点 ${nodes.length} · 关系 ${links.length}`;
 }
 
-/* ========= 线条样式：直线 + 柔和色 ========= */
+/* ========= 线条样式：直线 + 更柔和色 ========= */
 function edgeStyle(){
   return {
     width:0.9, opacity:0.7, curveness:0.0,
-    color:'#B8BFC7'
+    color:'#C9D1D9'
   };
 }
 
-/* ========= 渲染/主题 ========= */
+/* ========= 渲染 ========= */
 let chart, theme='light', mode='all';
 
 function currentTextColor(){
@@ -242,7 +239,9 @@ function render(nodes, links, keepLayout=false){
     data: nodes,
     links: links,
     categories: DATA.categories,
-    roam:true, draggable:true, animation:false,
+    roam:false,              // ✅ 禁用缩放/平移
+    draggable:true,
+    animation:false,
     lineStyle: edgeStyle(),
     edgeSymbol:['none','arrow'], edgeSymbolSize:6,
     emphasis: { focus:'adjacency' },
@@ -277,7 +276,7 @@ function render(nodes, links, keepLayout=false){
 }
 
 function applyTheme(mode){
-  // 固定为亮色，仅刷新颜色，不改布局
+  // 固定亮色，仅刷新颜色，不改布局
   chart.setOption({
     backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg').trim(),
     tooltip: {
@@ -295,7 +294,7 @@ function applyTheme(mode){
 function init(){
   chart = echarts.init(document.getElementById('kg'));
   render(DATA.nodes, DATA.links);
-  applyTheme(theme); // 固定亮色
+  applyTheme(theme);
   bindEvents();
 }
 window.addEventListener('resize', () => chart && chart.resize());
