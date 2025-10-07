@@ -1,40 +1,29 @@
 # -*- coding: utf-8 -*-
 # 一键部署脚本：自动 git 提交 + 推送 Streamlit 更新
-# 作者：刘航博（自动生成版）
-
-import os
-import subprocess
+import os, subprocess, sys
 from datetime import datetime
 
+# ========== 自动补全 Git 路径 ==========
+# 如果系统找不到 git，这里强制加到 PATH 中（兼容 Windows）
+os.environ["PATH"] += r";C:\Program Files\Git\cmd;C:\Program Files\Git\bin"
+
 def run(cmd):
-    """运行系统命令"""
-    print(f"\n🚀 正在执行：{cmd}")
+    print(f"\n🚀 执行：{cmd}")
     result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
-    if result.stdout:
-        print(result.stdout)
-    if result.stderr:
-        print(result.stderr)
-    if result.returncode != 0:
-        raise RuntimeError(f"❌ 命令执行失败：{cmd}")
-    print("✅ 执行成功")
+    if result.stdout: print(result.stdout)
+    if result.stderr: print(result.stderr)
+    if result.returncode != 0: raise RuntimeError(f"❌ 命令失败：{cmd}")
 
 def main():
+    os.chdir(os.path.dirname(__file__))
     print("=== CRC 知识图谱测评平台 · 一键部署开始 ===")
-    os.chdir(os.path.dirname(__file__))  # 切换到当前项目目录
-
-    # 1. git add .
-    run("git add .")
-
-    # 2. git commit -m "update + 时间"
-    commit_msg = f"update at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    run(f'git commit -m "{commit_msg}"')
-
-    # 3. git push
-    run("git push")
-
-    print("\n🎉 所有更新已提交，Streamlit Cloud 将自动重新部署！")
-    print("🌐 部署地址：https://crc-knowledge-system-v2-dggwmk6hrhqjbdg7qlet98.streamlit.app/")
-    print("⏱️ 通常需要 1–2 分钟自动刷新。")
+    subprocess.call("git add .", shell=True)
+    msg = f"update at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    subprocess.call(f'git commit -m "{msg}"', shell=True)
+    subprocess.call("git push", shell=True)
+    print("\n✅ 所有更新已提交，Streamlit Cloud 正在自动刷新部署！")
 
 if __name__ == "__main__":
+    # 统一输出编码为 UTF-8，防止 emoji 报错
+    sys.stdout.reconfigure(encoding="utf-8")
     main()
