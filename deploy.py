@@ -16,6 +16,8 @@ import requests
 import shutil
 import os
 os.environ["PATH"] += r";C:\Program Files\Git\bin;C:\Program Files\Git\cmd"
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 
 # === 配置 ===
 REPO_URL = "https://github.com/bobnice134-max/crc-knowledge-system-v2.git"
