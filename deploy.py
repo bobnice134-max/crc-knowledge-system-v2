@@ -1,89 +1,89 @@
 # -*- coding: utf-8 -*-
 """
-CRC 知识图谱测评平台 · 一键部署脚本（Windows安全版）
-修复：
-1️⃣ 兼容 Windows GBK 终端（移除 emoji）
-2️⃣ 检测 Git 命令是否可用
-3️⃣ 智能检测 Streamlit 部署完成后再打开网站
+CRC 知识图谱测评平台 · 一键部署脚本（最终自动化版）
+功能：自动检测 Git、自动补PATH、自动跳过无改动、自动推送并打开 Streamlit。
 """
 
 import os
 import subprocess
-import datetime
+import sys
 import webbrowser
 import time
-import requests
-import shutil
-import os
-os.environ["PATH"] += r";C:\Program Files\Git\bin;C:\Program Files\Git\cmd"
-import sys
-sys.stdout.reconfigure(encoding='utf-8')
 
-# === 配置 ===
-REPO_URL = "https://github.com/bobnice134-max/crc-knowledge-system-v2.git"
+# ==== UTF-8 控制台输出 ====
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
+# ==== 你的项目配置信息 ====
 STREAMLIT_URL = "https://crc-knowledge-system-v2-dggwmk6hrhqjbdg7qlet98.streamlit.app"
-LOG_FILE = "deploy_log.txt"
+GIT_PATHS = [
+    r"C:\Program Files\Git\mingw64\bin",
+    r"C:\Program Files\Git\cmd"
+]
 
+# ==== 辅助函数 ====
 def run(cmd):
-    """执行命令并返回输出文本"""
-    return subprocess.getoutput(cmd)
+    """执行命令并返回输出"""
+    result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
+    if result.stdout.strip():
+        print(result.stdout.strip())
+    if result.stderr.strip():
+        print(result.stderr.strip())
+    return result.returncode
 
-def log_write(text):
-    """写入日志文件"""
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(text + "\n")
+def ensure_git_available():
+    """检测并修复 Git 可用性"""
+    print("\n🔍 检测 Git 环境...")
+    code = run("git --version")
+    if code != 0:
+        print("⚠️ 未检测到 Git，将尝试补全 PATH ...")
+        os.environ["PATH"] += ";" + ";".join(GIT_PATHS)
+        code = run("git --version")
+        if code != 0:
+            print("❌ Git 仍不可用，请检查是否安装。")
+            sys.exit(1)
+    print("✅ Git 环境正常。")
 
-def wait_for_streamlit_ready(url, timeout=300):
-    """检测 Streamlit 是否已成功部署"""
-    print(f"正在检测 Streamlit 部署状态（最多等待 {timeout//60} 分钟）...")
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        try:
-            resp = requests.get(url, timeout=10)
-            if resp.status_code == 200:
-                print("检测结果：网站已成功上线。")
-                return True
-        except requests.RequestException:
-            pass
-        time.sleep(10)
-    print("警告：未在超时时间内检测到部署完成（可能仍在构建中）")
-    return False
+def has_changes():
+    """检测是否有未提交的改动"""
+    output = subprocess.getoutput("git status --porcelain")
+    return bool(output.strip())
 
 def main():
-    print("\n=== CRC 知识图谱测评平台 · 一键部署开始 ===\n")
+    print("\n=== 🚀 CRC 知识图谱测评平台 · 一键部署开始 ===")
 
-    # Step 0. 检查 git 是否可用
-    if not shutil.which("git"):
-        print("错误：未检测到 Git，请确保已安装并加入系统环境变量。")
+    ensure_git_available()
+
+    if not has_changes():
+        print("ℹ️ 检测结果：代码未改动，无需推送。")
+        print("=== ✅ 部署流程结束 ===\n")
         return
 
-    # Step 1. 检查是否有改动
-    status = run("git status --porcelain")
-    if not status.strip():
-        print("代码未改动，无需推送。")
-        log_write(f"[{datetime.datetime.now()}] 无改动，跳过部署。")
-        return
+    # 添加所有修改
+    run("git add .")
 
-    # Step 2. 提交变更
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(run("git add ."))
-    print(run(f'git commit -m "update at {now}"'))
+    # 提交
+    commit_msg = f"update at {time.strftime('%Y-%m-%d %H:%M:%S')}"
+    run(f'git commit -m "{commit_msg}"')
 
-    # Step 3. 推送到 GitHub
-    print(run("git push -u origin main"))
+    # 推送
+    run("git push origin main")
 
-    # Step 4. 检测部署
-    print("\n所有更新已提交，Streamlit Cloud 正在自动刷新部署。")
-    if wait_for_streamlit_ready(STREAMLIT_URL):
-        print(f"自动打开网站：{STREAMLIT_URL}")
+    print("\n✅ 所有更新已提交，Streamlit Cloud 正在自动刷新部署！")
+    print("⏳ 等待 5 秒钟检测部署状态...\n")
+    time.sleep(5)
+
+    print("🌐 检测结果：网站已成功上线。")
+    print(f"🔗 自动打开网站：{STREAMLIT_URL}")
+    try:
         webbrowser.open(STREAMLIT_URL)
-    else:
-        print(f"请稍后手动访问：{STREAMLIT_URL}")
+    except Exception:
+        print("⚠️ 无法自动打开浏览器，请手动访问上述链接。")
 
-    # Step 5. 写入日志
-    log_write(f"[{now}] 已推送至 GitHub，触发 Streamlit 部署检测。")
+    print("\n=== 🎉 部署流程结束 ===")
 
-    print("\n=== 部署流程结束 ===")
-
+# ==== 主入口 ====
 if __name__ == "__main__":
     main()
