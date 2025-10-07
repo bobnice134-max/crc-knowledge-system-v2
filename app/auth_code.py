@@ -1,4 +1,4 @@
-# auth_code.py —— 账号(考号)+登录码；本地 users.json 管理
+# auth_code.py —— 账号+密码；本地 users.json 管理
 import json, os, hashlib
 import streamlit as st
 
