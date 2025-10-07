@@ -355,7 +355,7 @@ function render(nodes, links, keepLayout=false){{
     data: nodes,
     links: links,
     categories: DATA.categories,
-    roam:false,              // ✅ 禁用缩放/平移
+    roam:true,              // ✅ 禁用缩放/平移
     draggable:true,
     animation:false,
     lineStyle: edgeStyle(),
